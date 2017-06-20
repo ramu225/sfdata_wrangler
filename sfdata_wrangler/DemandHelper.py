@@ -1,3 +1,8 @@
+
+# allows python3 style print function
+from __future__ import print_function
+
+
 # -*- coding: utf-8 -*-
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
@@ -728,7 +733,7 @@ class DemandHelper():
             if len(infiles)!=1: 
                 raise IOError('Wrong number of files matching pattern: ' + pattern)
             else: 
-                print infiles[0]
+                print(infiles[0])
                 df = pd.read_csv(infiles[0], skiprows=skiprows)
 
                 # get the data relevant to this county
@@ -779,7 +784,7 @@ class DemandHelper():
                 if len(infiles)!=1: 
                     raise IOError('Wrong number of files matching pattern: ' + pattern)
                 else: 
-                    print infiles[0]
+                    print(infiles[0])
                     df = pd.read_csv(infiles[0], skiprows=1)
 
                     # get the data relevant to this county
@@ -981,7 +986,7 @@ class DemandHelper():
             infiles = glob.glob(pattern)
                 
             for infile in infiles: 
-                print 'Reading QCEW data in ' + infile
+                print('Reading QCEW data in ' + infile)
                     
                 df_allrows = pd.read_csv(infile)
                 
@@ -1178,7 +1183,7 @@ class DemandHelper():
                 infile = filePattern + str(year) + '.csv' 
                 if os.path.isfile(infile):
                         
-                    print 'Reading LODES data in ' + infile            
+                    print('Reading LODES data in ' + infile)            
                     df = pd.read_csv(infile)            
                     
                     # one dimensional processing for RAC and WAC
@@ -1573,7 +1578,7 @@ class DemandHelper():
                                         -annual.at[extraEndYear-2, col]))
         
         # expand to monthly, and interpolate values
-        annual = annual.sort('YEAR')
+        annual = annual.sort_values('YEAR')
         annual['MONTH'] = annual['YEAR'].apply(lambda x: pd.Timestamp(str(int(x)) + '-07-01'))
         annual = annual.set_index(pd.DatetimeIndex(annual['MONTH']))
 

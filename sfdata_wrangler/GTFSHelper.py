@@ -1,3 +1,8 @@
+
+# allows python3 style print function
+from __future__ import print_function
+
+
 # -*- coding: utf-8 -*-
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
@@ -21,9 +26,9 @@ __license__     = """
 import pandas as pd
 import numpy as np
 import datetime
+
 import sys
-sys.path.append('C:\Workspace\TransitFeed\transitfeed-master\transitfeed')
-import loader  
+import transitfeed  
 from pyproj import Proj
 from shapely.geometry import Point, LineString  
             
@@ -85,7 +90,7 @@ def calculateHeadways(df):
     ['AGENCY_ID','ROUTE_SHORT_NAME','DIR','SEQ']
     (but not by TRIP).     
     """        
-    df.sort(['DEPARTURE_TIME_S'], inplace=True)
+    df.sort_values(['DEPARTURE_TIME_S'], inplace=True)
 
     lastDeparture = 0
     for i, row in df.iterrows():    
@@ -132,7 +137,7 @@ class GTFSHelper():
         'TRIP'            : 10,  
         'DIR'             : 10,  
         'TRIP_HEADSIGN'   : 64,  
-        'STOPNAME'        : 40,  
+        'STOPNAME'        : 64,  
         'SCHED_DATES'     : 20, 
         'ROUTE_ID'        : 10,  
         'TRIP_ID'         : 12,  
@@ -151,11 +156,11 @@ class GTFSHelper():
         """
         Sets up the transit feed. 
         """
-        tfl = loader(feed_path=gtfs_file)
+        tfl = transitfeed.Loader(feed_path=gtfs_file)
         self.schedule = tfl.Load()
         
         
-    def processFiles(self, infiles, outfile, outkey):
+    def processFiles(self, infiles, outfile, outkey, use_shape_dist=False):
         """
         Processes the list of GTFS files and stores
         them in an HDF format.   
@@ -174,7 +179,7 @@ class GTFSHelper():
             servicePeriods = self.schedule.GetServicePeriodList()        
             for period in servicePeriods:   
                 
-                df = self.getGTFSDataFrame(period, startIndex)       
+                df = self.getGTFSDataFrame(period, startIndex, use_shape_dist=use_shape_dist)       
                 
                 outstore.append(outkey, df, data_columns=True, 
                     min_itemsize=self.STRING_LENGTHS)
@@ -305,9 +310,14 @@ class GTFSHelper():
 
         outstore.close()
     
-    def getGTFSDataFrame(self, period, startIndex=0, route_types=range(0,100)):
+    
+    def getGTFSDataFrame(self, period, startIndex=0, route_types=range(0,100), use_shape_dist=False):
         """
         Converts the schedule into a dataframe for the given period
+        
+        use_shape_dist - specifies whether to calculate straight-line distances between stops
+                         or to follow the shape distance.  For now, we use SL dist for MUNI because
+                         some routes double back on themselves, and we can't handle that.  
         """
                         
         # create an empty list of dictionaries to store the data
@@ -345,7 +355,8 @@ class GTFSHelper():
                         
                     # get shape attributes, converted to a line
                     # this is needed because they are sometimes out of order
-                    shapeLine = self.getShapeLine(trip.shape_id, stopTimeList)
+                    if (use_shape_dist): 
+                        shapeLine = self.getShapeLine(trip.shape_id, stopTimeList)
                                                 
                     # initialize for looping
                     i = 0        
@@ -382,6 +393,8 @@ class GTFSHelper():
                                     
                             # distance traveled along shape for previous stop
                             lastDistanceTraveled = 0
+                            stopPoint = None
+                            lastStopPoint = None
                         else:
                             startOfLine = 0
                             
@@ -449,20 +462,25 @@ class GTFSHelper():
                             
                         # location along shape object (SFMTA uses meters)
                         if stopTime.shape_dist_traveled > 0: 
-                            record['SHAPE_DIST'] = stopTime.shape_dist_traveled
-                            distanceTraveled = stopTime.shape_dist_traveled * 3.2808399
+                            distanceTraveled = stopTime.shape_dist_traveled * 3.2808399                            
                         else: 
                             x, y = convertLongitudeLatitudeToXY((stopTime.stop.stop_lon, stopTime.stop.stop_lat))
                             stopPoint = Point(x, y)
-                            projectedDist = shapeLine.project(stopPoint, normalized=True)
-                            distanceTraveled = shapeLine.length * projectedDist
-                            record['SHAPE_DIST'] = distanceTraveled
-    
+                            if (use_shape_dist): 
+                                projectedDist = shapeLine.project(stopPoint, normalized=True)
+                                distanceTraveled = shapeLine.length * projectedDist                        
+                            else: 
+                                if startOfLine == 1: 
+                                    distanceTraveled = 0
+                                else: 
+                                    distanceTraveled = lastDistanceTraveled + stopPoint.distance(lastStopPoint)
+
                         # service miles
                         if startOfLine: 
                             serviceMiles = 0
                         else: 
                             serviceMiles = round((distanceTraveled - lastDistanceTraveled) / 5280.0, 3)
+                        
                         record['SERVMILES_S'] = serviceMiles
                                 
                         # speed (mph)
@@ -478,17 +496,23 @@ class GTFSHelper():
                                                     
                         # indicates range this schedule is in operation    
                         record['SCHED_DATES'] = dateRangeString          # start and end date for this schedule
-                        
-                        # track from previous record
-                        lastDepartureTime = departureTime      
-                        lastDistanceTraveled = distanceTraveled       
-                        
+                                                
                         # gtfs IDs
                         record['ROUTE_ID']  = str(trip.route_id).strip().upper()
                         record['TRIP_ID']   = str(trip.trip_id).strip().upper()
                         record['STOP_ID']   = str(stopTime.stop_id).strip().upper()
                         record['SERVICE_ID']= str(trip.service_id).strip().upper()
-                                                                                                                                        
+                        
+                        if serviceMiles < 0: 
+                            print('ERROR: Negative service miles')
+                            print(record)
+                            raise(ValueError)
+                                                
+                        # track from previous record
+                        lastDepartureTime = departureTime      
+                        lastDistanceTraveled = distanceTraveled     
+                        lastStopPoint = stopPoint
+                        
                         data.append(record)                
                         i += 1
                                     
@@ -502,7 +526,7 @@ class GTFSHelper():
         df = df.groupby(groupby, as_index=False).apply(calculateHeadways)
         
         # sorted
-        df.sort(['AGENCY_ID','ROUTE_ID','DIR','TRIP_HEADSIGN','TRIP','SEQ'], inplace=True)    
+        df.sort_values(['AGENCY_ID','ROUTE_ID','DIR','TRIP_HEADSIGN','TRIP','SEQ'], inplace=True)    
         df.index = pd.Series(range(startIndex,startIndex+len(df))) 
         
         return df

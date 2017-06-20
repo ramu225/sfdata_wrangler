@@ -1,3 +1,8 @@
+
+# allows python3 style print function
+from __future__ import print_function
+
+
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
 __license__     = """
@@ -18,8 +23,6 @@ __license__     = """
 """
 
 import sys
-
-sys.path.append('C:/Anaconda/Lib/site-packages/qtpy')
 
 from qtpandas import DataFrameWidget
 from qtpy import QtGui

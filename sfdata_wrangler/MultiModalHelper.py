@@ -1,3 +1,8 @@
+
+# allows python3 style print function
+from __future__ import print_function
+
+
 # -*- coding: utf-8 -*-
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
@@ -346,7 +351,7 @@ class MultiModalHelper():
         dirs = glob.glob(indir + '*/')
         for d in dirs: 
             year = d[-5:-1]
-            print 'Processing files in ' + d            
+            print('Processing files in ' + d)           
             
             for month in self.MONTHS: 
                 files = glob.glob(d + '/*' + month + '*')

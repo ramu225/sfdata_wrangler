@@ -1,3 +1,8 @@
+
+# allows python3 style print function
+from __future__ import print_function
+
+
 # -*- coding: utf-8 -*-
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
@@ -26,14 +31,13 @@ from SFMuniDataAggregator import SFMuniDataAggregator
 from GTFSHelper import GTFSHelper
             
             
-
-
+    
 def calculateRuntime(df):
     """
     Calculates the runtime between trip_stops. Assumes data are grouped by: 
     ['AGENCY_ID','ROUTE_SHORT_NAME','DIR','TRIP']
     """        
-    df.sort(['SEQ'], inplace=True)
+    df.sort_values(['SEQ'], inplace=True)
 
     firstStop = True
     lastDepartureTime = None
@@ -47,7 +51,6 @@ def calculateRuntime(df):
         lastDepartureTime = row['DEPARTURE_TIME']
     
     return df
-    
     
 def updateTripId(df):
     """
@@ -76,11 +79,14 @@ def updateSpeeds(speedInputs):
         return np.nan
         
 
-def getScheduleDeviation((actualTime, schedTime)):
+def getScheduleDeviation(times):
     """
-    Calculates the speed based on a tuple (servmiles, runtime)
+    Calculates schedule devation based on a tuple (actualTime, schedTime)
                                        
     """
+	
+    (actualTime, schedTime) = times
+	
     if pd.isnull(actualTime): 
         return np.nan
     elif (actualTime >= schedTime):
@@ -166,32 +172,32 @@ class SFMuniDataExpander():
     COLUMNS = [
 	['MONTH',             0, 0, 'gtfs'],        # Calendar attributes
 	['DATE',              0, 1, 'gtfs'],  
-        ['DOW',               0, 1, 'gtfs'], 
-        ['TOD',              10, 1, 'gtfs'],
-        ['AGENCY_ID',        10, 0, 'join'],        # for matching to AVL data
-        ['ROUTE_SHORT_NAME', 32, 1, 'join'], 
-        ['ROUTE_LONG_NAME',  32, 1, 'gtfs'],        # can have case/spelling differences on long name
-        ['DIR',               0, 1, 'join'], 
-        ['TRIP',              0, 1, 'join'], 
-        ['SEQ',               0, 1, 'join'], 
-        ['TRIP_STOPS',        0, 0, 'gtfs'],        # total number of trip-stops
-        ['OBSERVED',          0, 0, 'gtfs'],        # observed in AVL data?
-        ['ROUTE_TYPE',        0, 0, 'gtfs'],        # route/trip attributes 
-        ['TRIP_HEADSIGN',    64, 0, 'gtfs'], 
+    ['DOW',               0, 1, 'gtfs'], 
+    ['TOD',              10, 1, 'gtfs'],
+    ['AGENCY_ID',        10, 0, 'join'],        # for matching to AVL data
+    ['ROUTE_SHORT_NAME', 32, 1, 'join'], 
+    ['ROUTE_LONG_NAME',  32, 1, 'gtfs'],        # can have case/spelling differences on long name
+    ['DIR',               0, 1, 'join'], 
+    ['TRIP',              0, 1, 'join'], 
+    ['SEQ',               0, 1, 'join'], 
+    ['TRIP_STOPS',        0, 0, 'gtfs'],        # total number of trip-stops
+    ['OBSERVED',          0, 0, 'gtfs'],        # observed in AVL data?
+    ['ROUTE_TYPE',        0, 0, 'gtfs'],        # route/trip attributes 
+    ['TRIP_HEADSIGN',    64, 0, 'gtfs'], 
 	['HEADWAY_S' ,        0, 0, 'gtfs'], 
-        ['FARE',              0, 0, 'gtfs'], 
+    ['FARE',              0, 0, 'gtfs'], 
 	['PATTCODE'  ,       10, 0, 'avl'], 
-        ['STOPNAME',         32, 0, 'gtfs'],        # stop attributes
+    ['STOPNAME',         32, 0, 'gtfs'],        # stop attributes
 	['STOPNAME_AVL',     32, 0, 'avl' ], 
-        ['STOP_LAT',          0, 0, 'gtfs'], 
-        ['STOP_LON',          0, 0, 'gtfs'], 
-        ['SOL',               0, 0, 'gtfs'],
-        ['EOL',               0, 0, 'gtfs'],
+    ['STOP_LAT',          0, 0, 'gtfs'], 
+    ['STOP_LON',          0, 0, 'gtfs'], 
+    ['SOL',               0, 0, 'gtfs'],
+    ['EOL',               0, 0, 'gtfs'],
 	['TIMEPOINT' ,        0, 0, 'avl' ], 
-        ['ARRIVAL_TIME_S',    0, 0, 'gtfs'],        # times
+    ['ARRIVAL_TIME_S',    0, 0, 'gtfs'],        # times
 	['ARRIVAL_TIME'  ,    0, 0, 'avl'], 
 	['ARRIVAL_TIME_DEV',  0, 0, 'calculated'], 
-        ['DEPARTURE_TIME_S',  0, 0, 'gtfs'], 
+    ['DEPARTURE_TIME_S',  0, 0, 'gtfs'], 
 	['DEPARTURE_TIME' ,   0, 0, 'avl'], 
 	['DEPARTURE_TIME_DEV',0, 0, 'calculated'], 
 	['DWELL_S'   ,        0, 0, 'gtfs'], 
@@ -225,21 +231,18 @@ class SFMuniDataExpander():
 	['VC' ,               0, 0, 'calculated'],   # crowding
 	['CROWDED',           0, 0, 'calculated'], 
 	['CROWDHOURS',        0, 0, 'calculated'], 
-        ['ROUTE_ID',          0, 0, 'gtfs'],  # additional IDs 
-        ['ROUTE_AVL',         0, 0, 'avl'],   
-        ['TRIP_ID',           0, 0, 'gtfs'], 
-        ['STOP_ID',           0, 0, 'gtfs'], 
+    ['ROUTE_ID',          0, 0, 'gtfs'],  # additional IDs 
+    ['ROUTE_AVL',         0, 0, 'avl'],   
+    ['TRIP_ID',           0, 0, 'gtfs'], 
+    ['STOP_ID',           0, 0, 'gtfs'], 
 	['STOP_AVL'  ,        0, 0, 'avl'], 
-        ['BLOCK_ID',          0, 0, 'gtfs'], 
-        ['SHAPE_ID',          0, 0, 'gtfs'],
-        ['SHAPE_DIST',        0, 0, 'gtfs'],
 	['VEHNO'     ,        0, 0, 'avl'], 
-        ['SCHED_DATES',      20, 0, 'gtfs']  # range of this GTFS schedule
-        ]
+    ['SCHED_DATES',      20, 0, 'gtfs']  # range of this GTFS schedule
+    ]
                 
     
 
-    def __init__(self, sfmuni_file, trip_outfile, ts_outfile, 
+    def __init__(self, sfmuni_file, gtfs_outfile, trip_outfile, ts_outfile, 
                  daily_trip_outfile, daily_ts_outfile,
                  dow=[1,2,3], startDate='1900-01-01', endDate='2100-01-01', 
                  startingTripCount=1, startingTsCount=0):
@@ -253,6 +256,7 @@ class SFMuniDataExpander():
 
         # open the data stores
         self.sfmuni_store = pd.HDFStore(sfmuni_file) 
+        self.gtfs_store = pd.HDFStore(gtfs_outfile)
         
         # which days of week to run for
         self.dow = dow
@@ -274,8 +278,8 @@ class SFMuniDataExpander():
             if (date>=pd.Timestamp(startDate) and date<=pd.Timestamp(endDate)):
                 self.dateList.append(date)
         
-        print 'SFMuniDataExpander set up for ', len(self.dateList), ' observed dates between ', \
-               self.dateList[0], ' and ', self.dateList[len(self.dateList)-1]
+        print('SFMuniDataExpander set up for ', len(self.dateList), ' observed dates between ', 
+               self.dateList[0], ' and ', self.dateList[len(self.dateList)-1])
     
     
     def closeStores(self):  
@@ -283,9 +287,9 @@ class SFMuniDataExpander():
         Closes all datastores. 
         """
         self.sfmuni_store.close()
+        self.gtfs_store.close()
         self.aggregator.close()
         
-                
     def expandAndWeight(self, gtfs_file):
         """
         Read GTFS, cleans it, processes it, and writes it to an HDF5 file.
@@ -296,38 +300,44 @@ class SFMuniDataExpander():
         outfile - output file name in h5 format, same as AVL/APC format
         """
         
-        print datetime.datetime.now(), 'Converting raw data in file: ', gtfs_file
+        print(datetime.datetime.now().ctime(), 'Converting raw data in file: ', gtfs_file)
               
         # establish the feed, reading only the bus routes
         gtfsHelper = GTFSHelper()
         gtfsHelper.establishTransitFeed(gtfs_file)
         
+        # get the date ranges
+        gtfsDateRange = gtfsHelper.schedule.GetDateRange()        
+        gtfsStartDate = pd.to_datetime(gtfsDateRange[0], format='%Y%m%d')
+        gtfsEndDate   = pd.to_datetime(gtfsDateRange[1], format='%Y%m%d')
+        dateRangeString = str(gtfsDateRange[0]) + '-' + str(gtfsDateRange[1])
+                
         # create dictionary with one dataframe for each service period
+        # read these from the GTFS file that was previously created
         dataframes = {}
         servicePeriods = gtfsHelper.schedule.GetServicePeriodList()        
         for period in servicePeriods:   
-            if int(period.service_id) in self.dow:         
-                dataframes[period.service_id]  = gtfsHelper.getGTFSDataFrame(period, route_types=[3])
-           
-        
-        # loop through each date, and add the appropriate service to the database  
-        gtfsDateRange = gtfsHelper.schedule.GetDateRange()
-        gtfsStartDate = pd.to_datetime(gtfsDateRange[0], format='%Y%m%d')
-        gtfsEndDate   = pd.to_datetime(gtfsDateRange[1], format='%Y%m%d')
+            service_id = period.service_id
+            if int(service_id) in self.dow:                
+                # only keep the busses here
+                print('Reading service_id ', service_id)
+                dataframes[service_id] = self.gtfs_store.select('sfmuni', 
+                           where="SCHED_DATES=dateRangeString & SERVICE_ID=service_id & ROUTE_TYPE=3")
             
         # note that the last date is not included, hence the +1 increment
         servicePeriodsEachDate = gtfsHelper.schedule.GetServicePeriodsActiveEachDate(gtfsStartDate, gtfsEndDate + pd.DateOffset(days=1)) 
                    
-        print 'Writing data for periods from ', gtfsStartDate, ' to ', gtfsEndDate
+        # loop through each date, and add the appropriate service to the database  
+        print('Writing data for periods from ', gtfsStartDate, ' to ', gtfsEndDate)
         for date, servicePeriodsForDate in servicePeriodsEachDate:           
                         
             if pd.Timestamp(date) in self.dateList:           
-                print datetime.datetime.now(), ' Processing ', date         
+                print(datetime.datetime.now().ctime(), ' Processing ', date)         
                 
                 # use a separate file for each year
                 # and write a separate table for each month and DOW
                 # format of the table name is mYYYYMMDDdX, where X is the day of week
-                month = ((pd.to_datetime(date)).to_period('month')).to_timestamp()    
+                month = ((pd.to_datetime(date)).to_period('M')).to_timestamp()    
                 trip_outstore = pd.HDFStore(getOutfile(self.trip_outfile, month))  
                 ts_outstore = pd.HDFStore(getOutfile(self.ts_outfile, month))  
                 
@@ -376,11 +386,14 @@ class SFMuniDataExpander():
                         # set a unique trip-stop index
                         ts.index = self.tsCount + pd.Series(range(0,len(ts)))
                         self.tsCount += len(ts)
-                            
-                        # write the trip-stops        
-                        stringLengths = self.getStringLengths(ts.columns)                                                     
+                        
+                        # not sure why it thinks SEQ is an object and not an int, but try converting
+                        ts['SEQ'] = ts['SEQ'].astype('int64')
+                        
+                        # write the trip-stops             
+                        stringLengths = self.getStringLengths(ts.columns)   
                         ts_outstore.append(outkey, ts, data_columns=True, 
-                                    min_itemsize=stringLengths)
+                                        min_itemsize=stringLengths)                            
 
                         # aggregate to TOD and daily totals, and write those
                         self.aggregator.aggregateTripsToDays(trips)
@@ -389,7 +402,6 @@ class SFMuniDataExpander():
                                                 
                 trip_outstore.close()
                 ts_outstore.close()
-
 
     def getSFMuniData(self, date):
         """
@@ -459,11 +471,11 @@ class SFMuniDataExpander():
             joined = pd.merge(gtfs, sfmuni, how='left', on=joinFields, 
                                     suffixes=('', '_AVL'), sort=True)
         except KeyError:
-            print joinFields
-            print gtfs.info()
-            print gtfs.head()
-            print sfmuni.info()
-            print sfmuni.head()
+            print(joinFields)
+            print(gtfs.info())
+            print(gtfs.head())
+            print(sfmuni.info())
+            print(sfmuni.head())
             raise
 
         # calculate other derived fields
@@ -523,7 +535,8 @@ class SFMuniDataExpander():
                                 + joined['LOAD_DEP'] * joined['DWELL'])).values / 60.0                       
                                                 
         # keep only relevant columns, sorted
-        joined.sort(indexColumns, inplace=True)                        
+        joined.sort_values(indexColumns, inplace=True)           
+
         joined = joined[colnames]
             
         return joined

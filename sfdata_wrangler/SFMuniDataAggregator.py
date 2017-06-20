@@ -1,3 +1,8 @@
+
+# allows python3 style print function
+from __future__ import print_function
+
+
 # -*- coding: utf-8 -*-
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
@@ -118,8 +123,7 @@ class SFMuniDataAggregator():
                 ['LAST_SEQ'          ,'SEQ'               ,'max'     ,'trip' ,'int64'     , 0], 
                 ['NUMSTOPS'          ,'SEQ'         ,self.countUnique,'trip' ,'int64'     , 0],                 
                 ['TRIP_ID'           ,'TRIP_ID'           ,'first'   ,'trip' ,'int64'     , 0],         # trip attributes  
-   	        ['SHAPE_ID'          ,'SHAPE_ID'          ,'first'   ,'trip' ,'int64'     , 0],  
-   	        ['PATTCODE'          ,'PATTCODE'          ,'first'   ,'trip' ,'int64'     , 0],  
+                ['PATTCODE'          ,'PATTCODE'          ,'first'   ,'trip' ,'int64'     , 0],  
        	        ['ROUTE_LONG_NAME'   ,'ROUTE_LONG_NAME'   ,'first'   ,'trip' ,'object'    ,32],         # route attributes    
                 ['ROUTE_TYPE'        ,'ROUTE_TYPE'        ,'first'   ,'trip' ,'int64'     , 0], 
                 ['TRIP_HEADSIGN'     ,'TRIP_HEADSIGN'     ,'first'   ,'trip' ,'object'    ,64],   
@@ -485,11 +489,11 @@ class SFMuniDataAggregator():
                 ['CROWDHOURS'        ,'CROWDHOURS'        ,'mean'    ,'system' ,'float64'   , 0]  
                 ]
 
-        print 'Aggregating trips to month'        
+        print('Aggregating trips to month')
         
         # delete the output file if it already exists
         if os.path.isfile(monthly_file):
-            print 'Deleting previous aggregate output'
+            print('Deleting previous aggregate output')
             os.remove(monthly_file)                         
         outstore = pd.HDFStore(monthly_file)
         
@@ -507,7 +511,7 @@ class SFMuniDataAggregator():
         instore = pd.HDFStore(daily_file)                      
     
         # patterns
-        print 'Processing patterns by tod'                
+        print('Processing patterns by tod')
         df = instore.select('pattern_tod')                        
         df.index = pd.Series(range(0,len(df)))                     
                 
@@ -523,7 +527,7 @@ class SFMuniDataAggregator():
         pattern_tod_count += len(aggdf)    
 
 
-        print 'Processing daily patterns'                
+        print('Processing daily patterns')
         df = instore.select('pattern_day')                        
         df.index = pd.Series(range(0,len(df)))                     
                 
@@ -539,7 +543,7 @@ class SFMuniDataAggregator():
         pattern_day_count += len(aggdf)     
 
         # routes
-        print 'Processing routes by tod'                
+        print('Processing routes by tod')              
         df = instore.select('route_tod')                        
         df.index = pd.Series(range(0,len(df)))                     
                 
@@ -555,7 +559,7 @@ class SFMuniDataAggregator():
         route_tod_count += len(aggdf)    
 
 
-        print 'Processing daily routes'                
+        print('Processing daily routes')
         df = instore.select('route_day')                        
         df.index = pd.Series(range(0,len(df)))                     
                 
@@ -572,7 +576,7 @@ class SFMuniDataAggregator():
 
 
         # system
-        print 'Processing system by tod'                
+        print('Processing system by tod')                
         df = instore.select('system_tod')                        
         df.index = pd.Series(range(0,len(df)))                     
                 
@@ -588,7 +592,7 @@ class SFMuniDataAggregator():
         system_tod_count += len(aggdf)    
 
 
-        print 'Processing daily system'                
+        print('Processing daily system')                
         df = instore.select('system_day')                        
         df.index = pd.Series(range(0,len(df)))                     
                 
@@ -673,11 +677,11 @@ class SFMuniDataAggregator():
                 ['CROWDHOURS'        ,'CROWDHOURS'        ,'mean'    ,'system' ,'float64'   , 0]  
                 ]
 
-        print 'Aggregating trip-stops to month' 
+        print('Aggregating trip-stops to month') 
 
         # delete the output file if it already exists
         if os.path.isfile(monthly_file):
-            print 'Deleting previous aggregate output'
+            print('Deleting previous aggregate output')
             os.remove(monthly_file)                         
         outstore = pd.HDFStore(monthly_file)
         
@@ -696,9 +700,9 @@ class SFMuniDataAggregator():
         
         # do this month-by-month to save memory
         months = instore.select_column('system_day_s', 'MONTH').unique()
-        print 'Retrieved a total of %i months to process' % len(months)
+        print('Retrieved a total of %i months to process' % len(months))
         for month in months: 
-            print 'Processing month ', month
+            print('Processing month ', month)
         
             # route_stops
                   

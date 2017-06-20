@@ -1,3 +1,6 @@
+# allows python3 style print function
+from __future__ import print_function
+
 # -*- coding: utf-8 -*-
 __author__      = "Gregory D. Erhardt"
 __copyright__   = "Copyright 2013 SFCTA"
@@ -41,11 +44,11 @@ class SFMuniDataHelper():
     HEADERROWS = 2
     
     # number of rows to read at a time
-    #   This affects runtime.  Tests show:
+    #   This affects runtime.  On laptop, tests show:
     #      CHUNKSIZE = 100000: runs for 35 min and still doesn't read 100,000 rows
     #      CHUNKSIZE =  10000: reads 100,000 rows in 10 minutes
     #      CHUNKSIZE =   1000: reads 100,000 rows in 10 minutes
-    CHUNKSIZE = 10000
+    CHUNKSIZE = 100000
 
     # by default, read the first 62 columns, through PULLOUT_INT
     COLUMNS_TO_READ = [i for i in range(62)]
@@ -53,7 +56,7 @@ class SFMuniDataHelper():
     # specifies how to read in each column from raw input files
     #   columnName,        inputColumns, dataType, stringLength
     COLUMNS = [
-        ['SEQ',            (  0,   5),   'int64',   0],    # stop sequence
+    ['SEQ',            (  0,   5),   'int64',   0],    # stop sequence
 	['V2',             (  6,  10),   'int64',   0],    # not used
 	['STOP_AVL',       ( 10,  14),   'int64',   0],    # unique stop no	
 	['STOPNAME_AVL',   ( 15,  47),   'object', 32],    # stop name
@@ -61,7 +64,7 @@ class SFMuniDataHelper():
 	['ON',             ( 55,  58),   'int64',   0],    # on 
 	['OFF',            ( 59,  62),   'int64',   0],    # off
 	['LOAD_DEP',       ( 63,  66),   'int64',   0],    # departing load
-	['LOADCODE',       ( 67,  67),   'object',  1],    # ADJ=*, BAL=B
+	['LOADCODE',       ( 67,  67),   'object',  2],    # ADJ=*, BAL=B
 	['DATE_INT',       ( 68,  74),   'int64',   0],    # date
 	['ROUTE_AVL',      ( 75,  79),   'int64',   0],   
 	['PATTERN',        ( 80,  86),   'object',  6],    # schedule pattern
@@ -120,7 +123,7 @@ class SFMuniDataHelper():
 	['DWELL_S',        (364, 368),   'int64',   0],    # scheduled dwell time
 	['RECOVERY_S',     (369, 374),   'float64', 0],    # scheduled EOL recovery
 	['RECOVERY',       (375, 380),   'float64', 0],    
-	['POLITICAL',      (381, 390),   'int64',   0],    # not used
+	['POLITICAL',      (381, 390),   'object',  0],    # not used
 	['DELTAA',         (391, 397),   'int64',   0],    # distance from stop at arrival
 	['DELTAD',         (398, 404),   'int64',   0],    # distance from stop at departure
 	['ECNT',           (405, 409),   'int64',   0],    # error count
@@ -128,7 +131,7 @@ class SFMuniDataHelper():
 	['DIV',            (413, 416),   'int64',   0],    # division
 	['LASTTRIP',       (417, 421),   'int64',   0],    # previous trip
 	['NEXTTRIP',       (422, 426),   'int64',   0],    # next trip
-	['V86',            (427, 430),   'int64',   0],    # not used
+	['V86',            (427, 430),   'object',  0],    # not used
 	['TRIPID_3',       (431, 441),   'int64',   0],   
 	['WCC',            (442, 445),   'int64',   0],   
 	['BRC',            (446, 449),   'int64',   0],   
@@ -151,8 +154,131 @@ class SFMuniDataHelper():
 	['SC',             (534, 536),   'int64',   0],   
 	['T_MILE',         (537, 543),   'int64',   0],   
 	['CARS',           (544, 547),   'int64',   0]
-        ] 
+    ] 
 
+    # The .tab file uses slightly different column names where there are dates and times
+    TAB_COLUMNS = [
+     'SEQ',                # stop sequence
+	 'V2',                 # not used
+	 'STOP_AVL',           # unique stop no	
+	 'STOPNAME_AVL',       # stop name
+	 'ARRIVAL_TIME_HR',    # arrival time
+	 'ARRIVAL_TIME_MIN',   
+	 'ARRIVAL_TIME_SEC',   
+	 'ON',                 # on 
+	 'OFF',                # off
+	 'LOAD_DEP',           # departing load
+	 'LOADCODE',           # ADJ=*, BAL=B
+	 'DATE_MO',            # date
+	 'DATE_DAY',           
+	 'DATE_YR',            
+	 'ROUTE_AVL',         
+	 'PATTERN',            # schedule pattern
+	 'BLOCK',              
+	 'LAT',                # latitude
+	 'LON',                # longitude 
+	 'MILES',              # odometer reading (miles)
+	 'TRIP',               # trip
+	 'DOORCYCLES',         # door cycles
+	 'DELTA',              # delta
+	 'DOW',                # day of week schedule operated: 1-weekday, 2-saturday, 3-sunday
+	 'DIR',               
+	 'SERVMILES',          # delta vehicle miles  - miles bus travels from last stop
+	 'DLPMIN',             # delta minutes
+	 'PASSMILES',          # delta passenger miles
+	 'PASSHOURS',          # delta passenger minutes
+	 'VEHNO',              # bus number
+	 'LINE',               # route (APC numeric code)
+	 'DBNN',               # data batch
+	 'ARRIVAL_TIME_S_INT', # schedule time
+	 'RUNTIME_S',          # schedule run time, in decimal minutes
+	 'RUNTIME',            # runtime from the last schedule point--ARRIVAL_TIME - DEPARTURE_TIME of previous time point. (Excludes DWELL at the time points.), in decimal minutes
+	 'ODOM',               # not used
+	 'GODOM',              # distance (GPS)
+	 'ARRIVAL_TIME_DEV',   # schedule deviation
+	 'DWELL',              # dwell time interval (decimal minutes) -- (DEPARTURE_TIME - ARRIVAL_TIME)
+	 'MSFILE',             # sign up YYMM
+	 'QC101',              # not used
+	 'QC104',              # GPS QC
+	 'QC201',              # count QC
+	 'AQC',                # assignment QC
+	 'RECORD',             # record type
+	 'WHEELCHAIR',         # wheelchair
+	 'BIKERACK',           # bike rack
+	 'SP2',                # not used
+	 'V51',                # not used
+	 'VERSN',              # import version
+	 'DEPARTURE_TIME_HR',  # departure time
+	 'DEPARTURE_TIME_MIN', 
+	 'DEPARTURE_TIME_SEC', 
+	 'UON',                # unadjusted on
+	 'UOFF',               # unadjusted off
+	 'CAPACITY',           # capacity
+	 'OVER',               # 5 over cap
+	 'NS',                 # north/south
+	 'EW',                 # east/west
+	 'MAXVEL',             # max velocity on previous link
+	 'RDBRDNGS',           # rear door boardings
+	 'DV',                 # division
+	 'PATTCODE',           # pattern code
+	 'DWDI',               # distance traveled durign dwell
+	 'RUN',                # run
+	 'SCHOOL',             # school trip
+	 'TRIPID_2',           # long trip ID
+	 'PULLOUT_HR',         # movement time
+	 'PULLOUT_MIN',        
+	 'PULLOUT_SEC',        
+	 'DEPARTURE_TIME_S_INT',  # scheduled departure time
+	 'DEPARTURE_TIME_DEV',    # schedule deviation
+	 'DWELL_S',            # scheduled dwell time
+	 'RECOVERY_S',         # scheduled EOL recovery
+	 'RECOVERY',           
+	 'POLITICAL',          # not used
+	 'DELTAA',             # distance from stop at arrival
+	 'DELTAD',             # distance from stop at departure
+	 'ECNT',               # error count
+	 'MC',                 # municipal code
+	 'DIV',                # division
+	 'LASTTRIP',           # previous trip
+	 'NEXTTRIP',           # next trip
+	 'V86',                # not used
+	 'SIGNUP',
+     'PATTTYPE',
+     'SUBTYPE',
+     'DATE',
+     'LON',
+     'RTEDIR',
+     'STOPAA',
+     'DATEC',
+     'TIMESTOP',
+     'DOORCLOSE',
+     'PULLOUT',
+     'WEEKNUM',
+     'ARTEDIR',
+     'AVEHNO',
+     'ADATEC',
+     'BTRIP',
+     'TRTXLN',
+     'ATRIP',
+     'TRIPCODE',
+     'ASTOPAA',
+     'TRIPSTOP',
+     'PATTLEN',
+     'PATTEIGHT',
+     'TRIPNAME',
+     'ATRIPNAME',
+     'RTDIRSEQ',
+     'DOORDWELL',
+     'WAITDWELL',
+     'EOL',
+     'DOORTIME',
+     'WAITTIME',
+     'TIMEPER',
+     'ROUTEA',
+     'TEPPER'    
+    ] 
+    
+    
     # set the order of the columns in the resulting dataframe
     REORDERED_COLUMNS=[  
                 # calendar attributes
@@ -239,7 +365,7 @@ class SFMuniDataHelper():
         outfile - output file name in h5 format
         """
         
-        print (datetime.datetime.now(), 'Converting raw data in file: ', infile)
+        print (datetime.datetime.now().ctime(), 'Converting raw data in file: ', infile)
         
         # convert column specs 
         colnames = []       
@@ -260,14 +386,25 @@ class SFMuniDataHelper():
         # for tracking undefined route equivalencies
         missingRouteIds = set()
 
-        # set up the reader
-        reader = pd.read_fwf(infile,  
-                         names    = colnames, 
-                         colspecs = colspecs,
-                         skiprows = self.HEADERROWS, 
-                         usecols  = self.COLUMNS_TO_READ, 
-                         iterator = True, 
-                         chunksize= self.CHUNKSIZE)
+        # set up the reader -- one file is a different format
+        reader = None 
+        if (infile.endswith(".TAB")): 
+            reader = pd.read_table(infile,  
+                             header   = 0,                # so we can replace names
+                             names    = self.TAB_COLUMNS, 
+                             iterator = True, 
+                             chunksize= self.CHUNKSIZE, 
+                             na_values=['NA'])                
+        else: 
+            reader = pd.read_fwf(infile,  
+                             names    = colnames, 
+                             colspecs = colspecs,
+                             skiprows = self.HEADERROWS, 
+                             usecols  = self.COLUMNS_TO_READ, 
+                             iterator = True, 
+                             skip_blank_lines = True, 
+                             chunksize= self.CHUNKSIZE, 
+                             na_values=['ID'])             # because of headers in middle of file
 
         # establish the writer
         store = pd.HDFStore(outfile)
@@ -276,13 +413,42 @@ class SFMuniDataHelper():
         rowsRead    = 0
         rowsWritten = 0
         for chunk in reader:   
-
+        
             rowsRead    += len(chunk)
+                                               
+            # sometimes the header is stuck in the middle of the file.  drop those records
+            chunk = chunk.dropna(axis=0, subset=['SEQ'])
             
             # sometimes the rear-door boardings is 4 digits, in which case 
             # the remaining columns get mis-alinged
+            chunk['RDBRDNGS'] = chunk['RDBRDNGS'].astype('int64')
             chunk = chunk[chunk['RDBRDNGS']<1000]
             
+            # drop TRIPID_2 because it creates problems and we don't use it
+            chunk.drop('TRIPID_2', axis=1, inplace=True)
+            
+            # if  we have a tab column, convert the HR-MIN-SEC into INT values
+            if infile.endswith(".TAB"):                 
+                                
+                chunk['DATE_INT'] =((10000*chunk['DATE_MO'])
+                                  +   (100*chunk['DATE_DAY'])
+                                  +     (1*chunk['DATE_YR']))
+                
+                chunk['ARRIVAL_TIME_INT'] =((10000*chunk['ARRIVAL_TIME_HR'])  
+                                          +   (100*chunk['ARRIVAL_TIME_MIN']) 
+                                          +     (1*chunk['ARRIVAL_TIME_SEC']))
+
+                
+                chunk['DEPARTURE_TIME_INT'] =((10000*(chunk['DEPARTURE_TIME_HR'])  
+                                            +   (100*chunk['DEPARTURE_TIME_MIN']) 
+                                            +     (1*chunk['DEPARTURE_TIME_SEC'])))
+                
+                chunk['PULLOUT_INT'] =((10000*chunk['PULLOUT_HR'])  
+                                     +   (100*chunk['PULLOUT_MIN']) 
+                                     +     (1*chunk['PULLOUT_SEC']))
+                                     
+                chunk.replace(to_replace=' ', value='99', inplace=True)
+                
             # because of misalinged row, it sometimes auto-detects inconsistent
             # data types, so force them as specified.  Must be in same order 
             # as above
@@ -290,9 +456,11 @@ class SFMuniDataHelper():
                 if (colnames[i] in chunk):
                     if (coltypes[i]=='object'):
                         chunk[colnames[i]] = chunk[colnames[i]].astype('str')
-                    else: 
+                    elif (coltypes[i]=='int64'): 
+                        chunk[colnames[i]] = (chunk[colnames[i]].astype('float64')).astype('int64')
+                    else:         
                         chunk[colnames[i]] = chunk[colnames[i]].astype(coltypes[i])
-            
+                                    
             # only include revenue service
             # dir codes: 0-outbound, 1-inbound, 6-pull out, 7-pull in, 8-pull mid
             chunk = chunk[chunk['DIR'] < 2]
@@ -304,6 +472,9 @@ class SFMuniDataHelper():
             chunk = chunk[chunk['ROUTE_AVL']>0]
             chunk = chunk[chunk['STOP_AVL']<9999]
             chunk = chunk[chunk['TRIP']<9999]
+            
+            # LOADCODE gets nan numbers in string, which si too long to write
+            chunk['LOADCODE'].replace(to_replace='nan', value=' ', inplace=True)
             
             # calculate some basic data adjustments
             chunk['LON']      = -1 * chunk['LON']
@@ -319,28 +490,23 @@ class SFMuniDataHelper():
             chunk['AGENCY_ID']        = chunk['ROUTE_AVL'].map(self.routeEquiv['AGENCY_ID'])
             chunk['ROUTE_SHORT_NAME'] = chunk['ROUTE_AVL'].map(self.routeEquiv['ROUTE_SHORT_NAME'])
             chunk['ROUTE_LONG_NAME']  = chunk['ROUTE_AVL'].map(self.routeEquiv['ROUTE_LONG_NAME'])
-            
+                        
             # check for missing route IDs
             for r in chunk['ROUTE_AVL'].unique(): 
                 if not r in self.routeEquiv.index: 
                     missingRouteIds.add(r)
                     print ('ROUTE_AVL id ', r, ' not found in route equivalency file')
                 
-            # convert to timedate formats
-            arrTimeInt = pd.Series(zip(chunk['DATE_INT'], chunk['ARRIVAL_TIME_INT']), index=chunk.index)   
-            depTimeInt = pd.Series(zip(chunk['DATE_INT'], chunk['DEPARTURE_TIME_INT']), index=chunk.index) 
-            pulloutInt = pd.Series(zip(chunk['DATE_INT'], chunk['PULLOUT_INT']), index=chunk.index)   
-            
-            chunk['DATE']           = chunk['DATE_INT'].apply(self.getDate)    
-            chunk['ARRIVAL_TIME']   = arrTimeInt.apply(self.getWrapAroundTime)  
-            chunk['DEPARTURE_TIME'] = depTimeInt.apply(self.getWrapAroundTime)      
-            chunk['PULLOUT']        = pulloutInt.apply(self.getWrapAroundTime)  
-          
-                                                                                
+            # try to do this faster
+            chunk['DATE']           = self.getDates(chunk['DATE_INT'])  
+            chunk['ARRIVAL_TIME']   = self.getWrapAroundTimes(chunk, 'DATE_INT', 'ARRIVAL_TIME_INT')
+            chunk['DEPARTURE_TIME'] = self.getWrapAroundTimes(chunk, 'DATE_INT', 'DEPARTURE_TIME_INT')
+            chunk['PULLOUT']        = self.getWrapAroundTimes(chunk, 'DATE_INT', 'PULLOUT_INT')
+                        
             # drop duplicates (not sure why these occur) and sort
-            chunk.drop_duplicates(cols=self.INDEX_COLUMNS, inplace=True) 
-            chunk.sort(self.INDEX_COLUMNS, inplace=True)
-            
+            chunk.drop_duplicates(subset=self.INDEX_COLUMNS, inplace=True) 
+            chunk.sort_values(self.INDEX_COLUMNS, inplace=True)
+                        
             # set a unique index
             chunk.index = rowsWritten + pd.Series(range(0,len(chunk)))
                             
@@ -352,10 +518,6 @@ class SFMuniDataHelper():
                 store.append('sample', df, data_columns=True, 
                     min_itemsize=stringLengths)
             except ValueError: 
-                store = pd.HDFStore(outfile)
-                print ('Structure of HDF5 file is: ')
-                print (store.sample.dtypes)
-                store.close()
                 print ('Structure of current dataframe is: ')
                 print (df.dtypes)
                 raise  
@@ -365,52 +527,57 @@ class SFMuniDataHelper():
                 for type in types:
                     print (type)
                 raise
-
+            
             rowsWritten += len(df)
-            print (datetime.datetime.now(), ' Read %i rows and kept %i rows.' % (rowsRead, rowsWritten))
+            print(datetime.datetime.now().ctime(), ' Read %i rows and kept %i rows.' % (rowsRead, rowsWritten))
 
         if len(missingRouteIds) > 0: 
             print ('The following AVL route IDs are missing from the routeEquiv file:')
             for missing in missingRouteIds: 
-                print ('  ', missing)
+                print('  ', missing)
             
         # close the writer
         store.close()
 
-        
-    def getWrapAroundTime(self, dateInt, timeInt):
+      
+    def getWrapAroundTimes(self, df, dateint_field, timeint_field):
         """
         Converts a string in the format '%H%M%S' to a datetime object.
         Accounts for the convention where service after midnight is counted
         with the previous day, so input times can be >24 hours. 
         """        
-        
-        if timeInt>= 240000:
-            timeInt = timeInt - 240000
-            nextDay = True
-        else: 
-            nextDay = False
             
-        dateString = "{0:0>6}".format(dateInt)  
-        timeString = "{0:0>6}".format(timeInt)      
-        datetimeString = dateString + ' ' + timeString    
+        df['nextDay'] = df[timeint_field] >= 240000
+        df[timeint_field] = np.where(df['nextDay'], df[timeint_field] - 240000, df[timeint_field])
         
+        df['dateString']    = df[dateint_field].map("{0:0>6}".format)  
+        df['timeString']    = df[timeint_field].map("{0:0>6}".format)      
+        df['datetimeString'] = df['dateString'] + ' ' + df['timeString']    
+        
+        # once in a while we get a number that won't convert
         try: 
-            time = pd.to_datetime(datetimeString, format="%m%d%y %H%M%S")
+            df['time'] = pd.to_datetime(df['datetimeString'], format="%m%d%y %H%M%S")
         except ValueError:
-            print ('Count not convert ', datetimeString)
-            time = pd.NaT
-            
-        if nextDay: 
-            time = time + pd.DateOffset(days=1)
+            df['time'] = pd.NaT
+            for i, dt in df['datetimeString'].iteritems(): 
+                try: 
+                    df.at[i,'time'] = pd.to_datetime(dt, format="%m%d%y %H%M%S")
+                except ValueError: 
+                    print ('Could not convert date time', dt)
         
-        return time
+        df['time'] = np.where(df['nextDay'], df['time'] + pd.DateOffset(days=1), df['time'])
         
+        return df['time']
     
-    def getDate(self, dateInt):
+    
+    def getDates(self, dateIntSeries): 
         """
         Converts an integer in the format "%m%d%y" into a datetime object.
         """
-        dateString = "{0:0>6}".format(dateInt)          
-        date = pd.to_datetime(dateString, format="%m%d%y")
+        dateString = dateIntSeries.map("{0:0>6}".format)   
+        date =  pd.to_datetime(dateString, format="%m%d%y")
         return date
+    
+        dateSeries = [self.getDate(d) for d in dateIntSeries]
+        return dateSeries
+    
